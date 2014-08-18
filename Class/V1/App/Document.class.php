@@ -39,47 +39,35 @@ class Document extends Entity {
     }	
 
     public function load() {
-        $qry  = "SELECT `d`.`id`, `d`.`id_establishment`, `d`.`id_training`, `d`.`id_promo`, `d`.`id_user`, `d`.`name`, `d`.`description`, 
-`d`.`path`";
-        $qry .= "\nFROM `document` AS `d`";
-        $qry .= "\nWHERE `d`.`id_establishment` IN (SELECT `te`.`id_establishment` FROM `user_promo` AS `up` INNER JOIN `promo` AS `p` ON `p`.`id` = 
-`up`.`id_promo` INNER JOIN `training_establishment` AS `te` ON `te`.`id` = `p`.`id_training_establishment` WHERE `up`.`id_user` = " . Token::
-getUserId() . " GROUP BY `te`.`id_establishment`)";
+	    
+	    $qry  = "SELECT `d`.`id`, `d`.`id_establishment`, `d`.`id_training`, `d`.`id_promo`, `d`.`id_user`, `d`.`name`, `d`.`description`, 
+	`d`.`path`";
+	    $qry .= "\nFROM `document` AS `d`";
+	    $qry .= "\nWHERE `d`.`id_establishment` IN (SELECT `te`.`id_establishment` FROM `user_promo` AS `up` INNER JOIN `promo` AS `p` ON `p`.`id` = 
+	`up`.`id_promo` INNER JOIN `training_establishment` AS `te` ON `te`.`id` = `p`.`id_training_establishment` WHERE `up`.`id_user` = " . Token::
+	getUserId() . " GROUP BY `te`.`id_establishment`)";
 
-		if($_GET["id_promo"]){
-			$qry .= "\nAND `d`.`id_promo` = '".$_GET["id_promo"]."'";
-		}elseif($_GET["id_training"]){
-			$qry .= "\nAND `d`.`id_training` = '".$_GET["id_training"]."'";
-		}else{
-			$qry .= "\nAND `d`.`id_training` = '0' AND `d`.`id_promo` = '0'";
-		}
-		
-		
-		
-		// {
-		// $rs = $this->get_id_promo();
-        // $qry .= "\nAND (`d`.`id_promo` = 0 OR `d`.`id_promo` IN (" . implode(",", $rs) . "))";
-		// }
-		
-		// if($_GET["id_training"]){
-			// $qry .= "\nAND `d`.`id_training` = '".$_GET["id_training"]."'";
-		// }else{
-		// $rs = $this->get_id_training();
-        // $qry .= "\nAND (`d`.`id_training` = 0 OR `d`.`id_training` IN (" . implode(",", $rs) . "))";
-		// }
+			if($_GET["id_promo"]){
+				$qry .= "\nAND `d`.`id_promo` = '".$_GET["id_promo"]."'";
+			}elseif($_GET["id_training"]){
+				$qry .= "\nAND `d`.`id_training` = '".$_GET["id_training"]."'";
+			}else{
+				$qry .= "\nAND `d`.`id_training` = '0' AND `d`.`id_promo` = '0'";
+			}
 
-        $qry .= "\nGROUP BY `d`.`id`";
-        $qry .= "\nORDER BY `d`.`id_establishment`, `d`.`id_training`, `d`.`id_promo`";
-        $this->result["qry"] = $qry;
+      $qry .= "\nGROUP BY `d`.`id`";
+      $qry .= "\nORDER BY `d`.`id_establishment`, `d`.`id_training`, `d`.`id_promo`";
+      $this->result["qry"] = $qry;
 
-        $rs = DB::query($qry);
-        if ($rs->rowCount() > 0) {
-            while($rw = $rs->fetch(\PDO::FETCH_ASSOC)) {
-                $this->result['result'][] = $rw;
-            }
-        } else {
-            $this->result['error'] = 'No Document Found';
-        }
+      $rs = DB::query($qry);
+      if ($rs->rowCount() > 0) {
+          while($rw = $rs->fetch(\PDO::FETCH_ASSOC)) {
+              $this->result['result'][] = $rw;
+          }
+      } else {
+          $this->result['error'] = 'No Document Found';
+      }
+    
     }
 	
 	public function delete() {
