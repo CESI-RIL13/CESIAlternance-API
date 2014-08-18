@@ -9,7 +9,7 @@ use PDO;
 class User extends Entity {
 
     public function load() {
-        $qry = "SELECT `u`.`id`, `u`.`name`, `u`.`role`, `up`.`id_promo`, `u`.`photo_path` FROM `user` AS `u` 
+        $qry = "SELECT `u`.`id`, `u`.`name`, `u`.`role`, `up`.`id_promo`, `u`.`picture_path` FROM `user` AS `u` 
                 LEFT JOIN `user_promo` AS `up` ON `u`.`id` = `up`.`id_user` 
                 WHERE `u`.`token` = '" . Token::getToken() . "' LIMIT 0 , 1";
         $rs = DB::query($qry);
@@ -53,7 +53,7 @@ class User extends Entity {
 
     protected function listUser() {
         
-       $qry = 'SELECT `u`.`id`, `u`.`name`, `u`.`email`,`u`.role, `u`.`phone`, `u`.`photo_path` FROM `user` AS `u`';
+       $qry = 'SELECT `u`.`id`, `u`.`name`, `u`.`email`,`u`.role, `u`.`phone`, `u`.`picture_path` FROM `user` AS `u`';
         
         if(!empty($_GET)) {
             
