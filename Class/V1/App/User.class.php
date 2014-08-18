@@ -9,13 +9,21 @@ use PDO;
 class User extends Entity {
 
     public function load() {
-        $qry = "SELECT `u`.`id`, `u`.`name`, `u`.`role`, `up`.`id_promo` FROM `user` AS `u` 
+        $qry = "SELECT `u`.`id`, `u`.`name`, `u`.`role`, `up`.`id_promo`, `u`.`photo_path` FROM `user` AS `u` 
                 LEFT JOIN `user_promo` AS `up` ON `u`.`id` = `up`.`id_user` 
                 WHERE `u`.`token` = '" . Token::getToken() . "' LIMIT 0 , 1";
         $rs = DB::query($qry);
         if ($rs->rowCount() == 1) {
             $this->result['result'] = $rs->fetch(PDO::FETCH_ASSOC);
             $this->result['result']['id'] = (int) $this->result['id'];
+			$qry = "SELECT * FROM link WHERE user_id = ".$this->result['result']['id'];
+			$rs = DB::query($qry);
+			if($rs->rowCount() > 0){
+				while($rw = $rs->fetch(PDO::FETCH_ASSOC)) {
+		            $rw['id'] = (int)$rw['id'];
+		            $this->result['links'][] = $rw;
+            	} 
+			}
         } else {
             $this->result['error'] = 'No User Found';
         }
