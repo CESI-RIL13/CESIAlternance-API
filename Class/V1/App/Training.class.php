@@ -12,10 +12,14 @@ class Training extends Entity {
 
         $qry  = "SELECT `t`.`id`, `t`.`name`, `t`.`alias`, `t`.`duration` 
                 FROM `user_promo` AS `up` 
-                LEFT JOIN `promo` AS `p` ON `up`.`id_promo` = `p`.`id` 
-                LEFT JOIN `training` AS `t` ON `p`.`id_training_establishment` = `t`.`id`
-                WHERE `up`.`id_user` = " .Token::getUserId() ."
-                GROUP BY `t`.`id`
+                LEFT OUTER JOIN `promo` AS `p` ON `up`.`id_promo` = `p`.`id` 
+                LEFT OUTER JOIN `training` AS `t` ON `p`.`id_training_establishment` = `t`.`id`
+                WHERE `up`.`id_user` = " .Token::getUserId() ;
+
+        if($_GET['id'] > 0)
+            $qry .= " AND t.id =". $_GET['id'];
+
+        $qry  .= " GROUP BY `t`.`id`
                 ORDER BY `t`.`id` DESC";
 
         $rs = DB::query($qry);

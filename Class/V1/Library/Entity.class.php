@@ -10,7 +10,8 @@ class Entity {
     public function __construct($url) {
         $p = explode('/', $url);
         $this->table = array_shift($p);
-        $this->action = array_shift($p);
+        if (count($p) == 1 && is_numeric($p[0])) $this->action = 'load';
+        else $this->action = array_shift($p);
         if (count($p) > 0) {
             for ($i=0; $i<count($p); $i++) {
                 if ($i == 0 && is_numeric($p[$i])) $_GET['id'] = $p[$i];
