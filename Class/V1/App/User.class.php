@@ -88,7 +88,7 @@ class User extends Entity {
 
    public function addUser(){
 
-        $qry = "INSERT INTO user (name,email,role,phone,password)
+        $qry = "INSERT INTO user (name,email,role,phone)
                 VALUES ('".$_POST['name']."','".$_POST['email']."','".$_POST['role']."','".$_POST['phone']."')";
     
         if(!DB::exec($qry)) {
