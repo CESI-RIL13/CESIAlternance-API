@@ -89,20 +89,27 @@ class User extends Entity {
    public function addUser(){
 
         $qry = "INSERT INTO user (name,email,role,phone,password)
-                VALUES ('".$_POST['name']."','".$_POST['email']."','".$_POST['role']."','".$_POST['phone']."','".$_POST['pwd']."')";
-
-        try{
-            if(!DB::exec($qry))
-                return false;
-            $_GET['id'] = DB::lastInsertId();
-            $this->result['result']['id'] = (int)$_GET['id'];
-            $qry = "INSERT INTO user_promo SET id_user='". $_GET['id'] ."', id_promo='".$_POST['id_promo']."'";
-            DB::exec($qry);
-        }catch(PDOExeption $e){
-            echo $e->getMessage();
+                VALUES ('".$_POST['name']."','".$_POST['email']."','".$_POST['role']."','".$_POST['phone']."')";
+    
+        if(!DB::exec($qry)) {
+            throw new \Exception('error occur during request');
         }
+
+        $_GET['id'] = DB::lastInsertId();
+        $this->result['result']['id'] = (int)$_GET['id'];
+
+        $qry = "INSERT INTO user_promo SET id_user='". $_GET['id'] ."', id_promo='".$_POST['id_promo']."'";
+        DB::exec($qry);
 
    }
 
+   public function updateUser(){
 
+        $qry = "UPDATE user SET email = '".$_POST['email']."', phone = '".$_POST['phone']."' WHERE id = '".$_POST['id']."'";
+        
+        if(!DB::exec($qry)) {
+            throw new \Exception('error occur during request');
+        }
+   
+   }
 }

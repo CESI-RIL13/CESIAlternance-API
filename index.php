@@ -61,6 +61,8 @@ else {
         }
     } catch (PDOException $e) {
         $result['error'] = $e->getMessage();
+    } catch (Exception $e) {
+        $result['error'] = $e->getMessage();
     }
 }
 
