@@ -18,8 +18,10 @@ class Promo extends Entity {
 				JOIN user u ON up.id_user = u.id
 				WHERE u.token = '" . Token::getToken() ."'";
 
-        if($_GET['training'] > 0)
-            $qry .= " AND t.id =". $_GET['training'];
+        if(!empty($_GET['id']))
+            $qry .= " AND t.id =". $_GET['id'];
+        if(!empty($_GET['training']))
+            $qry .= " AND te.id=".$_GET['training'];
 
         try{
         $rs = DB::query($qry);

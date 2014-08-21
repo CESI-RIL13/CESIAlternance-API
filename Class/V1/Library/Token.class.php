@@ -15,7 +15,7 @@ class Token {
         if (!empty($headers[AUTH_HEADER])) Token::$token = $headers[AUTH_HEADER];
         else if (DEBUG && !empty($_REQUEST['token'])) Token::$token = $_REQUEST['token'];
         if (!empty(Token::$token)) {
-            $qry = "SELECT `u`.`id`, `u`.`name`, `u`.`role` FROM `user` AS  `u` WHERE `u`.`token` = '" . Token::getToken() . "' AND `u`.`expire` > NOW() LIMIT 0 , 1";
+            $qry = "SELECT `u`.`id`, `u`.`name`, `u`.`email`, `u`.`role` FROM `user` AS  `u` WHERE `u`.`token` = '" . Token::getToken() . "' AND `u`.`expire` > NOW() LIMIT 0 , 1";
             $rs = DB::query($qry);
             if ($rs->rowCount() == 1) {
                 Token::$user = $rs->fetch(PDO::FETCH_ASSOC);
@@ -38,5 +38,13 @@ class Token {
 
     public static function getUserRole() {
         return Token::$user['role'];
+    }
+
+    public static function getUserName() {
+        return Token::$user['name'];
+    }
+
+    public static function getUserEmail() {
+        return Token::$user['email'];
     }
 }

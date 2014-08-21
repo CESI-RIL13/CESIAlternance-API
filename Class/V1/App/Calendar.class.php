@@ -22,6 +22,7 @@ class Calendar extends Entity {
             $calendars = array();
             while ($rw = $rs->fetch(\PDO::FETCH_ASSOC)) {
                 $url = 'http://www.google.com/calendar/feeds/' . $rw['id_planning'] . '@group.calendar.google.com/public/full?alt=json';
+                $this->result['url'] = $url;
                 $content = file_get_contents($url);
                 if (!empty($content)) {
                     $calendar = array();
@@ -60,7 +61,7 @@ class Calendar extends Entity {
 
     private function isEnabledForUser($content) {
         if (Token::getUserRole() == 'Intervenant') {
-            if (preg_match('@\(#(\d+)\)@', $content, $matches) == 1 && $matches[1] == Token::getUserId()) return true;
+            if (preg_match('@#(\d+)@', $content, $matches) == 1 && $matches[1] == Token::getUserId()) return true;
             return false;
         }
         return true;

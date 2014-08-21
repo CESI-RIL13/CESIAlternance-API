@@ -9,19 +9,19 @@ use PDO;
 class User extends Entity {
 
     public function load() {
-        $qry = "SELECT `u`.`id`, `u`.`name`, `u`.`role`, `up`.`id_promo`, `u`.`picture_path`, `u`.`phone` FROM `user` AS `u` 
+        $qry = "SELECT `u`.`id`, `u`.`name`, `u`.`role`, `up`.`id_promo`, `u`.`picture_path`, `u`.`phone`, `u`.`email` FROM `user` AS `u` 
                 LEFT JOIN `user_promo` AS `up` ON `u`.`id` = `up`.`id_user` 
                 WHERE `u`.`token` = '" . Token::getToken() . "' LIMIT 0 , 1";
         $rs = DB::query($qry);
         if ($rs->rowCount() == 1) {
             $this->result['result'] = $rs->fetch(PDO::FETCH_ASSOC);
-            $this->result['result']['id'] = (int) $this->result['id'];
+            $this->result['result']['id'] = (int) $this->result['result']['id'];
 			$qry = "SELECT * FROM link WHERE user_id = ".$this->result['result']['id'];
 			$rs = DB::query($qry);
 			if($rs->rowCount() > 0){
 				while($rw = $rs->fetch(PDO::FETCH_ASSOC)) {
-		            $rw['id'] = (int)$rw['id'];
-		            $this->result['links'][] = $rw;
+					$rw['id'] = (int)$rw['id'];
+					$this->result['links'][] = $rw;
             	} 
 			}
         } else {
@@ -112,4 +112,16 @@ class User extends Entity {
         }
    
    }
+
+	public function addLink(){
+		$qry= "INSERT INTO link (user_id, type, url)
+				VALUES ('".$_POST['id']."', '".$_POST['type']."', '".$_POST['url']."')";
+
+		if(!DB::exec($qry)){
+			throw new \Exception('error occur during request');
+		}
+
+		$_GET['id'] = DB::lastInsertId();
+		$this->result['result']['id'] = (int)$_GET['id'];
+	}
 }

@@ -7,6 +7,7 @@ use \App\Calendar;
 use \App\Document;
 use \App\Promo;
 use \App\Training;
+use \App\Establishment;
 
 $result['success'] = false;
 $request = null;
@@ -36,22 +37,16 @@ else {
                 $result = array_merge($result, $provider->process());
                 break;
             default:
-                if (!Token::isValid()) $result['error'] = 'Invalid token';
+                if (0 === strpos($request, 'api/v1/')) $request = str_replace('api/v1/', '', $request);
+                $tokenValid = Token::isValid();
+                if (requestNeedToken($request) && !$tokenValid) $result['error'] = 'Invalid token';
                 else if ($request != 'verify') {
-                    if (strpos($request, 'user') === 0) {
-                        $provider = new User($request);
-                        $result = array_merge($result, $provider->process());
-                    } else if (strpos($request, 'calendar') === 0) {
-                        $provider = new Calendar($request);
-                        $result = array_merge($result, $provider->process());
-                    } else if (strpos($request, 'document') === 0) {
-                        $provider = new Document($request);
-                        $result = array_merge($result, $provider->process());
-                    } else if (strpos($request, 'promo') === 0) {
-                        $provider = new Promo($request);
-                        $result = array_merge($result, $provider->process());
-                    } else if (strpos($request, 'training') === 0) {
-                        $provider = new Training($request);
+                    $tmp   = explode('/', $request);
+                    $class = array_shift($tmp);
+                    $class = '\\App\\' . ucwords($class);
+                    if (exist($class)) {
+                        require_once get_class_path($class);
+                        $provider = new $class($request);
                         $result = array_merge($result, $provider->process());
                     } else {
                         $result['error'] = 'Request method undefined';
@@ -64,6 +59,11 @@ else {
     } catch (Exception $e) {
         $result['error'] = $e->getMessage();
     }
+}
+
+function requestNeedToken($path) {
+    $free = array('password/query', 'password/request', 'password/change', 'password/update');
+    return !in_array($path, $free);
 }
 
 $result['success'] = empty($result['error']);
