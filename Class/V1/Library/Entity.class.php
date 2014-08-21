@@ -10,14 +10,16 @@ class Entity {
     public function __construct($url) {
         $p = explode('/', $url);
         $this->table = array_shift($p);
-        $this->action = array_shift($p);
+        //$this->action = array_shift($p);
         if (count($p) > 0) {
-            for ($i=0; $i<count($p); $i++) {
-                if ($i == 0 && is_numeric($p[$i])) $_GET['id'] = $p[$i];
-                else {
-                    $_GET[$p[$i]] = $p[$i+1];
-                    $i++;
-                }
+            while (count($p) > 0) {
+                $key = array_shift($p);
+                if (!is_numeric($key) && empty($this->action)) $this->action = $key;
+                else if (is_numeric($key) && empty($_GET['id'])) $_GET['id'] = $key;
+                else if (count($p) > 0) {
+                    $value = array_shift($p);
+                    $_GET[$key] = $value;
+                } else $_GET['param'] = $key;
             }
         }
         if (empty($this->action)) $this->action = 'load';
