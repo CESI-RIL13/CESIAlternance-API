@@ -20,8 +20,8 @@ class Promo extends Entity {
 
         if(!empty($_GET['id']))
             $qry .= " AND t.id =". $_GET['id'];
-        if(!empty($_GET['training']))
-            $qry .= " AND te.id=".$_GET['training'];
+        if(!empty($_GET['id_training']))
+            $qry .= " AND te.id=".$_GET['id_training'];
 
         try{
         $rs = DB::query($qry);
