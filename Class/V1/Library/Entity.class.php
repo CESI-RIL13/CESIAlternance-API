@@ -37,6 +37,25 @@ class Entity {
         return $this->result;
     }
 
+    public function save() {
+        $arg = array();
+        foreach ($_POST as $key => $value) {
+            $arg[] = $key . "='".$value."'";
+        }
+        
+        try {
+            $qry = (!empty($_GET['id']) ? "UPDATE " . $this->table . " SET " . implode(", ", $arg) . " WHERE id =".$_GET['id'] : "INSERT INTO " . $this->table . " SET " . implode(", ", $arg));
+            $rs = DB::query($qry);
+            
+            if(empty($_GET['id']))
+                $_GET['id'] = DB::lastInsertId();
+
+            $this->result['result']['id'] = (int)$_GET['id'];
+        } catch (Exception $e) {
+            $this->result['error'] = $e->getMessage();
+        }
+    }
+
     public function delete(){
         try{
             $qry  = "DELETE FROM ".$this->table." WHERE id = '".$_GET["id"]."'"; 
