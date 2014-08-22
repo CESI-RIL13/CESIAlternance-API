@@ -1,6 +1,7 @@
 <?php
 namespace Library;
-
+use Library\DB;
+use PDO;
 class Entity {
 
     protected $table;
@@ -35,5 +36,15 @@ class Entity {
         }
         return $this->result;
     }
+
+    public function delete(){
+        try{
+            $qry  = "DELETE FROM ".$this->table." WHERE id = '".$_GET["id"]."'"; 
+            $rs = DB::query($qry);
+        } 
+        catch (Exception $e) {
+            $this->result['error'] = $e->getMessage();
+        }
+}
 
 } 

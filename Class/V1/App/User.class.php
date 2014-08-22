@@ -18,12 +18,13 @@ class User extends Entity {
             $this->result['result']['id'] = (int) $this->result['result']['id'];
 			$qry = "SELECT * FROM link WHERE user_id = ".$this->result['result']['id'];
 			$rs = DB::query($qry);
+			$this->result['links'] = array();
 			if($rs->rowCount() > 0){
 				while($rw = $rs->fetch(PDO::FETCH_ASSOC)) {
 					$rw['id'] = (int)$rw['id'];
 					$this->result['links'][] = $rw;
             	} 
-			}
+			} 
         } else {
             $this->result['error'] = 'No User Found';
         }
@@ -113,15 +114,50 @@ class User extends Entity {
    
    }
 
-	public function addLink(){
-		$qry= "INSERT INTO link (user_id, type, url)
-				VALUES ('".$_POST['id']."', '".$_POST['type']."', '".$_POST['url']."')";
+	public function saveLink(){
+		$isnew = !isset($_GET['id']) && $_GET['id'] > 0;
+		$qry = $isnew ? "INSERT INTO link SET " : "UPDATE link SET ";
+		foreach($_POST as $key => $value)
+			$field[] = $key."='".$value."'";
+		$qry.=implode(", ",$field);
+		if(!$isnew) $qry.=" WHERE id=".$_GET['id'];
+
+		if(!DB::exec($qry)){
+			throw new \Exception('Impossible de sauvegarder un lien.');
+		}
+
+		$this->result['result']['id'] = (int)($isnew ? DB::lastInsertId() : $_GET['id']);
+	}
+
+	public function deleteLink(){
+		$qry= "DELETE FROM link WHERE id='".$_GET['id']."'";
 
 		if(!DB::exec($qry)){
 			throw new \Exception('error occur during request');
 		}
 
-		$_GET['id'] = DB::lastInsertId();
-		$this->result['result']['id'] = (int)$_GET['id'];
+		$this->result["success"]=true;
 	}
+    public function picture(){
+        $path = "../" . $_POST['path'];
+        if(!is_dir($path)){
+            $s = mkdir($path);
+            chmod($path, 0777);
+            $this->result['create'] = $s;
+        }
+        foreach ($_FILES as $file) {
+            $tmp = explode(".",$file["name"]);
+            $ext = array_pop($tmp);
+            $path .=  "/"  . Token::getUserId() . "." .strtolower($ext);
+            $success = move_uploaded_file($file["tmp_name"], $path); 
+            break;
+        }
+        if($success){
+            $qry = "UPDATE user SET picture_path = '".str_replace("../", "", $path)."' WHERE id ='".Token::getUserId()."'";            
+            if(!DB::exec($qry)) {
+                throw new \Exception('error occur during request');
+            }
+        }
+        $this->result['success'] = $success;    
+    }
 }
