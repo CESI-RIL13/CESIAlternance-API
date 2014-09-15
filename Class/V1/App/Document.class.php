@@ -8,50 +8,6 @@ use PDO;
 
 class Document extends Entity {
 
-	public function get_id_promo() {
-		$qry = "SELECT id_promo FROM user_promo WHERE id_user = " . Token::getUserId() . "";
-		$result = array();
-		$rs = DB::query($qry);
-		if ($rs->rowCount() > 0) {
-			while($rw = $rs->fetch(PDO::FETCH_ASSOC)) {
-				$result[] = $rw['id_promo'];
-			}
-		}
-		return $result;
-	}
-
-	public function get_id_training() {
-		$rs = $this->get_id_promo();
-		$qry = "SELECT id FROM training WHERE id in ";
-		$qry .= "(SELECT id_training FROM training_establishment WHERE id in ";
-		$qry .= "(SELECT id_training_establishment FROM promo WHERE id in (" . implode(",", $rs) . ")))";
-
-		$result = array();
-		$rs = DB::query($qry);
-		if ($rs->rowCount() > 0) {
-			while($rw = $rs->fetch(PDO::FETCH_ASSOC)) {
-				$result[] = $rw['id'];
-			}
-		}
-		return $result;
-	}
-
-	public function get_id_establishment() {
-		$rs = $this->get_id_promo();
-		$qry = "SELECT id FROM establishment WHERE id in ";
-		$qry .= "(SELECT id_establishment FROM training_establishment WHERE id in ";
-		$qry .= "(SELECT id_training_establishment FROM promo WHERE id in (" . implode(",", $rs) . ")))";
-
-		$result = array();
-		$rs = DB::query($qry);
-		if ($rs->rowCount() > 0) {
-			while($rw = $rs->fetch(PDO::FETCH_ASSOC)) {
-				$result[] = $rw['id'];
-			}
-		}
-		return $result;
-	}	
-
 	public function load() {
 		$qry  = "SELECT d.id, d.id_establishment, d.id_training, d.id_promo, d.id_user, d.name, d.description, d.path";
 		$qry .= "\nFROM document AS d WHERE ";
@@ -66,6 +22,8 @@ class Document extends Entity {
 		if(!empty($_GET["id_training"])) {
 			$where[] = "d.id_training = '".$_GET["id_training"]."'";
 		}
+		else
+			$where[] = "id_training = 0";
 		/*else {
 			$rs = $this->get_id_training();
 			$qry .= "d.id_training in(SELECT id FROM training WHERE id in(". implode(",", $rs) . ")) AND ";
@@ -74,6 +32,8 @@ class Document extends Entity {
 		if(!empty($_GET["id_promo"])) {
 			$where[] = "d.id_promo = '".$_GET["id_promo"]."'";
 		}
+		else
+			$where[] = "id_promo = 0";
 		/*else {
 			$rs = $this->get_id_promo();
 			$qry .= "d.id_promo in(SELECT id FROM promo WHERE id in(". implode(",", $rs) . ")) ";
@@ -82,12 +42,14 @@ class Document extends Entity {
 		if(!empty($_GET["id_user"])) {
 			$where[] = "d.id_user = '".Token::getUserId()."'";
 		}
+		else
+			$where[] = "id_user = 0";
 		
 		if(count($where) > 0)
 			$qry .= implode(" AND ", $where);
 			
 		$qry .= "\nORDER BY d.id DESC";
-
+		
 		$rs = DB::query($qry);
 		if ($rs->rowCount() > 0) {
 			while($rw = $rs->fetch(\PDO::FETCH_ASSOC)) {
@@ -100,7 +62,7 @@ class Document extends Entity {
 	
 	public function delete() {
 		try{
-			$qry  = "SELECT CONCAT(path,'/',name) as path FROM document WHERE id = '".$_GET["id"]."'"; 
+			$qry  = "SELECT path, id_owner FROM document WHERE id = '".$_GET["id"]."'"; 
 			//$this->result['qry'] =  $qry;
 			$rs = DB::query($qry);
 			if ($rs->rowCount() > 0) {
@@ -108,26 +70,34 @@ class Document extends Entity {
 				$rw["path"] = "../".$rw["path"];
 				$exist = is_file($rw["path"]);
 				//$this->result['isfile'] = $exist;
-				if ($exist) {
-					$rm = unlink($rw["path"]);
-					//$this->result['removed'] = $rm;
-					if ($rm) {
-						$qry = "DELETE FROM document WHERE id = '".$_GET["id"]."'"; 
-						$rs = DB::exec($qry);
-						$this->result['success'] = true;
-					}else{
-						$this->result['error'] = "Impossible de supprimer";
+				if($exist) {
+					if(($rw["id_owner"] == Token::getUserId()) || (Token::getUserRole() == "IF")) {
+						$rm = unlink($rw["path"]);
+						//$this->result['removed'] = $rm;
+						if($rm) {
+							$qry = "DELETE FROM document WHERE id = '".$_GET["id"]."'"; 
+							$rs = DB::exec($qry);
+							$this->result['success'] = true;
+						}	
+						else {
+							$this->result['error'] = "Impossible de supprimer";
+						}
+					}
+					else {
+						$this->result['error'] = "Vous n'avez pas les droits pour supprimer ce document";
+					}
+				}
+				else {
+					$this->result['error'] = "document ".$rw["path"]." non trouvé";
+				}
 			}
-				}else{
-					$this->result['error'] = "document non trouvé";
-			}
-			}else{
+			else {
 				$this->result['error'] = "document non référencé";
 			}
-		} catch (Exception $e) {
-		$this->result['error'] = $e->getMessage();
-		 }
-	
+		} 
+		catch (Exception $e) {
+			$this->result['error'] = $e->getMessage();
+		}
 	}
 
 	public function upload() {
@@ -143,7 +113,8 @@ class Document extends Entity {
 			$this->result['create'] = $s;
 		}
 		foreach ($_FILES as $file) {
-			$ext = array_pop(explode(".",$file["name"] ));
+			$tmp = explode(".",$file["name"]);
+			$ext = array_pop($tmp);
 			$path .=  "/" . uniqid() . "." .strtolower($ext);
 			$this->result['name'] = $file["name"];
 			$success = move_uploaded_file($file["tmp_name"], $path); 
@@ -154,28 +125,25 @@ class Document extends Entity {
 			
 			$where = array();
 			
-			if(!empty($_GET["id_establishment"])) {
+			if((Token::getUserRole() == "IF") && (!empty($_POST["id_establishment"]))) {
 				$rs = $this->get_id_establishment();
-				$where = "id_establishment ='".$rs."'";
+				$where[] = "id_establishment ='".$rs[0]."'";
 			}
 			
-			if(!empty($_GET["id_training"]))
-				$where = "id_training ='" .$_GET["id_training"]."'" ;
+			if(!empty($_POST["id_training"]))
+				$where[] = "id_training ='" .$_POST["id_training"]."'" ;
 				
-			if(!empty($_GET["id_promo"]))
-				$where = "id_promo ='" .$_GET["id_promo"]."'";
+			if(!empty($_POST["id_promo"]))
+				$where[] = "id_promo ='" .$_POST["id_promo"]."'";
 				
-			if(!empty($_GET["id_user"]))
-				$where = "id_user ='" .$_GET["id_user"]."'";
+			if(!empty($_POST["id_user"]))
+				$where[] = "id_user ='" .$_POST["id_user"]."'";
 				
 			if(count($where) > 0)
-				$qry .= "SET ".implode(", ", $where);
+				$qry .= ", ".implode(", ", $where);
 				
-			$qry .= ", name='".$_POST["titre"]."', description='".$_POST["description"]."', path='".str_replace("..", "", $path)."'";
+			$qry .= ", name='".$_POST["titre"]."', description='".$_POST["description"]."', path='".str_replace("../", "", $path)."'";
 			
-			echo($qry);
-			exit();
-
 			if(!DB::exec($qry)) {
 				throw new \Exception('error occur during request');
 			}

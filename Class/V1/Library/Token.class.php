@@ -47,4 +47,5 @@ class Token {
     public static function getUserEmail() {
         return Token::$user['email'];
     }
+
 }

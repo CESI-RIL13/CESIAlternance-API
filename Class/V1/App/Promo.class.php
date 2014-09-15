@@ -6,6 +6,7 @@ use Library\Token;
 use Library\DB;
 use PDO;
 use PDOException;
+use App\Training;
 
 class Promo extends Entity {
 
@@ -36,6 +37,35 @@ class Promo extends Entity {
             echo $e->getMessage();
         }
 
+    }
+
+    public function save() {
+        
+        $training = new Training();
+
+        if(isset($_POST['id_training'])) {
+            $id_training = $_POST['id_training'];
+            unset($_POST['id_training']);
+        }
+
+        if(isset($_POST['id_establishment'])) {
+            $id_establishment = $_POST['id_establishment'];
+            unset($_POST['id_establishment']);
+            $training->getTrainingEstablishment($id_training,$id_establishment);            
+        } else if(empty($_POST['id_establishment']) && Token::getUserRole() == "IF") {
+            $training->getTrainingEstablishment($id_training);
+        } else {
+            throw new \Exception('No establishment id');
+        }
+
+
+        if(empty($training->result))
+            throw new \Exception('No establishment define for this training');
+
+        $_POST['id_training_establishment'] = $training->result[0]['id'];
+        
+        parent::save();
+        $this->addTrainingToEstablishement($id_training);
     }
 
 }

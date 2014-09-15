@@ -18,12 +18,13 @@ class User extends Entity {
             $this->result['result']['id'] = (int) $this->result['result']['id'];
 			$qry = "SELECT * FROM link WHERE user_id = ".$this->result['result']['id'];
 			$rs = DB::query($qry);
+			$this->result['links'] = array();
 			if($rs->rowCount() > 0){
 				while($rw = $rs->fetch(PDO::FETCH_ASSOC)) {
 					$rw['id'] = (int)$rw['id'];
 					$this->result['links'][] = $rw;
             	} 
-			}
+			} 
         } else {
             $this->result['error'] = 'No User Found';
         }
@@ -86,42 +87,89 @@ class User extends Entity {
         }
    }
 
-   public function addUser(){
-
-        $qry = "INSERT INTO user (name,email,role,phone)
-                VALUES ('".$_POST['name']."','".$_POST['email']."','".$_POST['role']."','".$_POST['phone']."')";
-    
-        if(!DB::exec($qry)) {
-            throw new \Exception('error occur during request');
+   public function save() {
+        if(isset($_POST['id_promo'])) {
+            $id_promo = $_POST['id_promo'];
+            unset($_POST['id_promo']);
         }
+        parent::save();
 
-        $_GET['id'] = DB::lastInsertId();
-        $this->result['result']['id'] = (int)$_GET['id'];
-
-        $qry = "INSERT INTO user_promo SET id_user='". $_GET['id'] ."', id_promo='".$_POST['id_promo']."'";
-        DB::exec($qry);
-
+        if(isset($id_promo) && !empty($id_promo))
+            $this->addPromo($id_promo);
    }
 
-   public function updateUser(){
-
-        $qry = "UPDATE user SET email = '".$_POST['email']."', phone = '".$_POST['phone']."' WHERE id = '".$_POST['id']."'";
+   public function addPromo($id_promo = 0) {
         
+        if(empty($id_promo) && !empty($_POST['id_promo']))
+            $id_promo = $_POST['id_promo'];
+        else
+            throw new \Exception('no promo id');
+
+        $qry = "INSERT INTO user_promo SET id_user =".(isset($_GET['id']) ? $_GET['id'] : Token::getUserId()).", id_promo=".$id_promo;
         if(!DB::exec($qry)) {
             throw new \Exception('error occur during request');
         }
-   
    }
 
-	public function addLink(){
-		$qry= "INSERT INTO link (user_id, type, url)
-				VALUES ('".$_POST['id']."', '".$_POST['type']."', '".$_POST['url']."')";
+	public function saveLink(){
+		$isnew = !isset($_GET['id']) && $_GET['id'] > 0;
+		$qry = $isnew ? "INSERT INTO link SET " : "UPDATE link SET ";
+		foreach($_POST as $key => $value)
+			$field[] = $key."='".$value."'";
+		$qry.=implode(", ",$field);
+		if(!$isnew) $qry.=" WHERE id=".$_GET['id'];
+
+		if(!DB::exec($qry)){
+			throw new \Exception('Impossible de sauvegarder un lien.');
+		}
+
+		$this->result['result']['id'] = (int)($isnew ? DB::lastInsertId() : $_GET['id']);
+	}
+
+	public function deleteLink(){
+		$qry= "DELETE FROM link WHERE id='".$_GET['id']."'";
 
 		if(!DB::exec($qry)){
 			throw new \Exception('error occur during request');
 		}
 
-		$_GET['id'] = DB::lastInsertId();
-		$this->result['result']['id'] = (int)$_GET['id'];
+		$this->result["success"]=true;
 	}
+
+	public function listLink(){
+		$qry="SELECT * FROM link WHERE user_id=".$_GET['id'];
+
+		$rs=DB::query($qry);
+		if($rs->rowCount() > 0){
+			while($rw=$rs->fetch(PDO::FETCH_ASSOC)){
+				$rw['id'] = (int)$rw['id'];
+				$this->result['result'][] = $rw;
+			}
+		}
+	}	
+
+    public function picture(){
+        $path = "../" . $_POST['path'];
+        if(!is_dir($path)){
+            $s = mkdir($path);
+            chmod($path, 0777);
+            $this->result['create'] = $s;
+        }
+        foreach ($_FILES as $file) {
+            $tmp = explode(".",$file["name"]);
+            $ext = array_pop($tmp);
+			$endpath =$_POST['user_id'] . "." .strtolower($ext);
+            $path .=  $endpath;
+            $success = move_uploaded_file($file["tmp_name"], $path); 
+            break;
+        }
+        if($success){
+            $qry = "UPDATE user SET picture_path = '".$endpath."' WHERE id ='".$_POST['user_id']."'";            
+            if(!DB::exec($qry)) {
+                throw new \Exception('error occur during request');
+            }
+        }
+        $this->result['success'] = $success;
+		$this->result['result']['picture_path'] = $endpath;
+    }
 }
