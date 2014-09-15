@@ -8,50 +8,6 @@ use PDO;
 
 class Document extends Entity {
 
-	public function get_id_promo() {
-		$qry = "SELECT id_promo FROM user_promo WHERE id_user = " . Token::getUserId() . "";
-		$result = array();
-		$rs = DB::query($qry);
-		if ($rs->rowCount() > 0) {
-			while($rw = $rs->fetch(PDO::FETCH_ASSOC)) {
-				$result[] = $rw['id_promo'];
-			}
-		}
-		return $result;
-	}
-
-	public function get_id_training() {
-		$rs = $this->get_id_promo();
-		$qry = "SELECT id FROM training WHERE id in ";
-		$qry .= "(SELECT id_training FROM training_establishment WHERE id in ";
-		$qry .= "(SELECT id_training_establishment FROM promo WHERE id in (" . implode(",", $rs) . ")))";
-
-		$result = array();
-		$rs = DB::query($qry);
-		if ($rs->rowCount() > 0) {
-			while($rw = $rs->fetch(PDO::FETCH_ASSOC)) {
-				$result[] = $rw['id'];
-			}
-		}
-		return $result;
-	}
-
-	public function get_id_establishment() {
-		$rs = $this->get_id_promo();
-		$qry = "SELECT id FROM establishment WHERE id in ";
-		$qry .= "(SELECT id_establishment FROM training_establishment WHERE id in ";
-		$qry .= "(SELECT id_training_establishment FROM promo WHERE id in (" . implode(",", $rs) . ")))";
-
-		$result = array();
-		$rs = DB::query($qry);
-		if ($rs->rowCount() > 0) {
-			while($rw = $rs->fetch(PDO::FETCH_ASSOC)) {
-				$result[] = $rw['id'];
-			}
-		}
-		return $result;
-	}	
-
 	public function load() {
 		$qry  = "SELECT d.id, d.id_establishment, d.id_training, d.id_promo, d.id_user, d.name, d.description, d.path";
 		$qry .= "\nFROM document AS d WHERE ";
@@ -60,12 +16,14 @@ class Document extends Entity {
 		
 		if(!empty($_GET["id_establishment"])) {
 			$rs = $this->get_id_establishment();
-			$where[] = "d.id_establishment in(SELECT id FROM establishment WHERE id in(". implode(",", $rs) . ")) AND id_training = 0 AND id_promo = 0";		
+			$where[] = "d.id_establishment in(SELECT id FROM establishment WHERE id in(". implode(",", $rs) . "))";		
 		}
 		
 		if(!empty($_GET["id_training"])) {
-			$where[] = "d.id_training = '".$_GET["id_training"]."' AND id_promo = 0";
+			$where[] = "d.id_training = '".$_GET["id_training"]."'";
 		}
+		else
+			$where[] = "id_training = 0";
 		/*else {
 			$rs = $this->get_id_training();
 			$qry .= "d.id_training in(SELECT id FROM training WHERE id in(". implode(",", $rs) . ")) AND ";
@@ -74,6 +32,8 @@ class Document extends Entity {
 		if(!empty($_GET["id_promo"])) {
 			$where[] = "d.id_promo = '".$_GET["id_promo"]."'";
 		}
+		else
+			$where[] = "id_promo = 0";
 		/*else {
 			$rs = $this->get_id_promo();
 			$qry .= "d.id_promo in(SELECT id FROM promo WHERE id in(". implode(",", $rs) . ")) ";
@@ -82,6 +42,8 @@ class Document extends Entity {
 		if(!empty($_GET["id_user"])) {
 			$where[] = "d.id_user = '".Token::getUserId()."'";
 		}
+		else
+			$where[] = "id_user = 0";
 		
 		if(count($where) > 0)
 			$qry .= implode(" AND ", $where);

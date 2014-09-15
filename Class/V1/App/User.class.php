@@ -100,12 +100,12 @@ class User extends Entity {
 
    public function addPromo($id_promo = 0) {
         
-        if(empty($id_promo) && isset($_POST['id_promo']))
+        if(empty($id_promo) && !empty($_POST['id_promo']))
             $id_promo = $_POST['id_promo'];
         else
             throw new \Exception('no promo id');
 
-        $qry = "INSERT INTO user_promo SET id_user =".$_GET['id'].", id_promo=".$id_promo;
+        $qry = "INSERT INTO user_promo SET id_user =".(isset($_GET['id']) ? $_GET['id'] : Token::getUserId()).", id_promo=".$id_promo;
         if(!DB::exec($qry)) {
             throw new \Exception('error occur during request');
         }
@@ -135,6 +135,19 @@ class User extends Entity {
 
 		$this->result["success"]=true;
 	}
+
+	public function listLink(){
+		$qry="SELECT * FROM link WHERE user_id=".$_GET['id'];
+
+		$rs=DB::query($qry);
+		if($rs->rowCount() > 0){
+			while($rw=$rs->fetch(PDO::FETCH_ASSOC)){
+				$rw['id'] = (int)$rw['id'];
+				$this->result['result'][] = $rw;
+			}
+		}
+	}	
+
     public function picture(){
         $path = "../" . $_POST['path'];
         if(!is_dir($path)){
@@ -145,16 +158,18 @@ class User extends Entity {
         foreach ($_FILES as $file) {
             $tmp = explode(".",$file["name"]);
             $ext = array_pop($tmp);
-            $path .=  "/"  . Token::getUserId() . "." .strtolower($ext);
+			$endpath =$_POST['user_id'] . "." .strtolower($ext);
+            $path .=  $endpath;
             $success = move_uploaded_file($file["tmp_name"], $path); 
             break;
         }
         if($success){
-            $qry = "UPDATE user SET picture_path = '".str_replace("../", "", $path)."' WHERE id ='".Token::getUserId()."'";            
+            $qry = "UPDATE user SET picture_path = '".$endpath."' WHERE id ='".$_POST['user_id']."'";            
             if(!DB::exec($qry)) {
                 throw new \Exception('error occur during request');
             }
         }
-        $this->result['success'] = $success;    
+        $this->result['success'] = $success;
+		$this->result['result']['picture_path'] = $endpath;
     }
 }
