@@ -108,10 +108,13 @@ class Training extends Entity {
     }
 
     public function getTrainingEstablishment($id_training = 0, $id_establishment = 0) {
-        if(empty($id_training) && !empty($_POST['id_training'])) {
+
+        if(isset($_POST['id_training'])) {
             $id_training = $_POST['id_training'];
             unset($_POST['id_training']);
-        } else
+        }
+
+        if(empty($id_training))
             throw new \Exception('no training id');
 
         $qry = "SELECT * FROM training_establishment WHERE id_training = " . $id_training;
@@ -121,15 +124,18 @@ class Training extends Entity {
             unset($_POST['id_establishment']);
             $qry .= " AND id_establishment = ".$id_establishment;
         } else if (empty($id_establishment) && Token::getUserRole() == "IF") {
-            $id_establishment = array_shift($this->get_id_establishment());
+            $establishments = $this->get_id_establishment();
+            $id_establishment = array_shift($establishments);
             $qry .= " AND id_establishment = ".$id_establishment;
-        }
+        } else
+            throw new \Exception('no establishment id');
 
         try {
-            $rs = DB::exec($qry);
+            $rs = DB::query($qry);
+
             if ($rs->rowCount() > 0) {
                 while($rw = $rs->fetch(PDO::FETCH_ASSOC)) {
-                    $result[] = array(
+                    $this->result[] = array(
                         'id'=>$rw['id'],
                         'id_training'=>$rw['id_training'],
                         'id_establishment'=>$rw['id_establishment'],
