@@ -41,7 +41,7 @@ class Promo extends Entity {
 
     public function save() {
         
-        $training = new Training();
+        $training = new Training(trim($_GET['q'], '/'));
 
         if(isset($_POST['id_training'])) {
             $id_training = $_POST['id_training'];
@@ -58,14 +58,12 @@ class Promo extends Entity {
             throw new \Exception('No establishment id');
         }
 
-
         if(empty($training->result))
             throw new \Exception('No establishment define for this training');
 
         $_POST['id_training_establishment'] = $training->result[0]['id'];
         
         parent::save();
-        $this->addTrainingToEstablishement($id_training);
     }
 
 }
