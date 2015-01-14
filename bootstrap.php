@@ -10,11 +10,11 @@ setlocale(LC_ALL, 'fr_FR.UTF8');
 define("DEBUG", true);
 
 define("MYSQL_HOST", "mysql");
-define("MYSQL_DB", "jdossantos_cesialternance");
-define("MYSQL_USER", "90919_cesi");
+define("MYSQL_DB", "cesi_alternance");
+define("MYSQL_USER", "cesi_alternance");
 define("MYSQL_PASS", "UYLrQwHHMpNUyqKb");
-define("AUTH_HEADER", "X-Cesi-App-Auth");
-define("BASE_URL", "http://cesialternance.jdossantos.com/v1/");
+define("AUTH_HEADER", "X-CESI-App-Auth");
+define("BASE_URL", "http://cesi.kolapsis.com/cesi_alternance/api/v1/");
 
 function get_class_path($class) {
 	return 'Class/' . strtoupper($_REQUEST['v']) . '/' . str_replace('\\', '/', $class).'.class.php';
