@@ -47,7 +47,7 @@ class Entity {
             
             $qry = (!empty($_GET['id']) ? "UPDATE " . $this->table . " SET " . implode(", ", $arg) . " WHERE id =".$_GET['id'] : "INSERT INTO " . $this->table . " SET " . implode(", ", $arg));
             $rs = DB::query($qry);
-            
+
             if(empty($_GET['id']))
                 $_GET['id'] = DB::lastInsertId();
 

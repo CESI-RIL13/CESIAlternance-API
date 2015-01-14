@@ -121,8 +121,15 @@ class Training extends Entity {
             $id_establishment = $_POST['id_establishment'];
             unset($_POST['id_establishment']);
         } else if (empty($id_establishment) && Token::getUserRole() == "IF") {
-            $establishments = $this->get_id_establishment();
-            $id_establishment = array_shift($establishments);
+            try {
+                $rs = DB::query("SELECT id_establishment FROM user WHERE id =".Token::getUserId());
+                $rw = $rs->fetch(PDO::FETCH_ASSOC);
+                $id_establishment = $rw['id_establishment'];
+            } 
+            catch (Exception $e) {
+                $this->result['error'] = $e->getMessage();
+            }
+  
         }
 
         if(empty($id_establishment))

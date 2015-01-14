@@ -99,10 +99,10 @@ class User extends Entity {
    }
 
    public function addPromo($id_promo = 0) {
-        
+
         if(empty($id_promo) && !empty($_POST['id_promo']))
             $id_promo = $_POST['id_promo'];
-        else
+        else if(empty($id_promo))
             throw new \Exception('no promo id');
 
         $qry = "INSERT INTO user_promo SET id_user =".(isset($_GET['id']) ? $_GET['id'] : Token::getUserId()).", id_promo=".$id_promo;
