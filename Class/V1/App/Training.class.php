@@ -117,18 +117,18 @@ class Training extends Entity {
         if(empty($id_training))
             throw new \Exception('no training id');
 
-        $qry = "SELECT * FROM training_establishment WHERE id_training = " . $id_training;
-
-        if(empty($id_establishment) && !empty($_POST['id_establishment'])) {
+        if(empty($id_establishment) && isset($_POST['id_establishment'])) {
             $id_establishment = $_POST['id_establishment'];
             unset($_POST['id_establishment']);
-            $qry .= " AND id_establishment = ".$id_establishment;
         } else if (empty($id_establishment) && Token::getUserRole() == "IF") {
             $establishments = $this->get_id_establishment();
             $id_establishment = array_shift($establishments);
-            $qry .= " AND id_establishment = ".$id_establishment;
-        } else
+        }
+
+        if(empty($id_establishment))
             throw new \Exception('no establishment id');
+        
+        $qry = "SELECT * FROM training_establishment WHERE id_training = " . $id_training . " AND id_establishment = ".$id_establishment;
 
         try {
             $rs = DB::query($qry);
