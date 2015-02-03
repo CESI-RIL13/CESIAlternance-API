@@ -11,7 +11,7 @@ class User extends Entity {
     public function load() {
         $qry = "SELECT `u`.`id`, `u`.`name`, `u`.`role`, `up`.`id_promo`, `u`.`picture_path`, `u`.`phone`, `u`.`email` FROM `user` AS `u` 
                 LEFT JOIN `user_promo` AS `up` ON `u`.`id` = `up`.`id_user` 
-                WHERE `u`.`token` = '" . Token::getToken() . "' LIMIT 0 , 1";
+                WHERE `u`.`token` = '" . Token::getToken() . "' AND u.actif = 1 LIMIT 0 , 1";
         $rs = DB::query($qry);
         if ($rs->rowCount() == 1) {
             $this->result['result'] = $rs->fetch(PDO::FETCH_ASSOC);
@@ -73,7 +73,7 @@ class User extends Entity {
                 }
             }
             if(count($whereClause) > 0)
-                $qry .= " WHERE " . implode(" AND ",$whereClause);
+                $qry .= " WHERE actif = 1 AND " . implode(" AND ",$whereClause);
         }
 
         $rs = DB::query($qry);
@@ -94,7 +94,7 @@ class User extends Entity {
         }
         parent::save();
 
-        if(isset($id_promo) && !empty($id_promo))
+        if(empty($_GET['id']) && isset($id_promo) && !empty($id_promo))
             $this->addPromo($id_promo);
    }
 
@@ -105,9 +105,17 @@ class User extends Entity {
         else if(empty($id_promo))
             throw new \Exception('no promo id');
 
-        $qry = "INSERT INTO user_promo SET id_user =".(isset($_GET['id']) ? $_GET['id'] : Token::getUserId()).", id_promo=".$id_promo;
-        if(!DB::exec($qry)) {
-            throw new \Exception('error occur during request');
+        try {
+            $qry = "INSERT INTO user_promo SET id_user =".(isset($_GET['id']) ? $_GET['id'] : Token::getUserId()).", id_promo=".$id_promo;
+            DB::exec($qry);
+           /* if(!DB::exec($qry))
+                throw new \Exception('error occur during request');*/
+        } catch (Exception $e) {
+            if($e->getCode() == 1062) {
+                $this->result['errorCode'] = $e->getCode();
+                $this->result['error'] = "user already link to this promo";
+            } else
+                $this->result['error'] = $e->getMessage();
         }
    }
 

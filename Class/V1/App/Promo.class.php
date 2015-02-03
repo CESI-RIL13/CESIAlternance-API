@@ -18,7 +18,7 @@ class Promo extends Entity {
 				JOIN training t ON te.id_training = t.id
 				JOIN user_promo up ON p.id = up.id_promo
 				JOIN user u ON up.id_user = u.id
-				WHERE u.token = '" . Token::getToken() ."'";
+				WHERE u.token = '" . Token::getToken() ."' AND p.actif = 1";
 
         if(!empty($_GET['id']))
             $qry .= " AND t.id =". $_GET['id'];

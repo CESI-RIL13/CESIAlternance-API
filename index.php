@@ -11,7 +11,6 @@ use \App\Establishment;
 
 $result['success'] = false;
 $request = null;
-
 if (isset($_GET['q'])) $request = trim($_GET['q'], '/');
 
 switch ($_SERVER['REQUEST_METHOD']) {

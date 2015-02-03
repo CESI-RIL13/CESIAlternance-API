@@ -60,12 +60,22 @@ class Entity {
 
     public function delete(){
         try{
-            $qry  = "DELETE FROM ".$this->table." WHERE id = '".$_GET["id"]."'"; 
+            $qry  = "UPDATE ".$this->table." SET actif = 0 WHERE id = '".$_GET["id"]."'"; 
             $rs = DB::query($qry);
         } 
         catch (Exception $e) {
             $this->result['error'] = $e->getMessage();
         }
+    }
+
+    public function restore() {
+        try{
+            $qry  = "UPDATE ".$this->table." SET actif = 1 WHERE id = '".$_GET["id"]."'"; 
+            $rs = DB::query($qry);
+        } 
+        catch (Exception $e) {
+            $this->result['error'] = $e->getMessage();
+        }        
     }
 
     public function get_id_promo() {

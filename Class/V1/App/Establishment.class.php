@@ -16,7 +16,7 @@ class Establishment extends Entity {
                 LEFT OUTER JOIN `training` AS `t` ON `p`.`id_training_establishment` = `t`.`id`
                 LEFT OUTER JOIN `training_establishment` AS `te` ON `t`.`id` = `te`.`id_training`
                 LEFT OUTER JOIN `establishment` AS `e` ON `e`.`id` = `te`.`id_establishment`
-                WHERE `up`.`id_user` = " .Token::getUserId() ;
+                WHERE e.actif = 1 AND `up`.`id_user` = " .Token::getUserId() ;
 
         if($_GET['id'] > 0)
             $qry .= " AND e.id =". $_GET['id'];

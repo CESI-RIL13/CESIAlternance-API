@@ -10,7 +10,7 @@ class Document extends Entity {
 
 	public function load() {
 		$qry  = "SELECT d.id, d.id_establishment, d.id_training, d.id_promo, d.id_user, d.name, d.description, d.path";
-		$qry .= "\nFROM document AS d WHERE ";
+		$qry .= "\nFROM document AS d WHERE actif = 1 AND ";
 
 		$where = array();
 		
@@ -72,16 +72,16 @@ class Document extends Entity {
 				//$this->result['isfile'] = $exist;
 				if($exist) {
 					if(($rw["id_owner"] == Token::getUserId()) || (Token::getUserRole() == "IF")) {
-						$rm = unlink($rw["path"]);
+						//$rm = unlink($rw["path"]);
 						//$this->result['removed'] = $rm;
-						if($rm) {
-							$qry = "DELETE FROM document WHERE id = '".$_GET["id"]."'"; 
-							$rs = DB::exec($qry);
-							$this->result['success'] = true;
-						}	
-						else {
-							$this->result['error'] = "Impossible de supprimer";
-						}
+						//if($rm) {
+						$qry = "UPDATE document SET actif = 0 WHERE id = '".$_GET["id"]."'"; 
+						$rs = DB::exec($qry);
+						$this->result['success'] = true;
+						//}	
+						//else {
+						//	$this->result['error'] = "Impossible de supprimer";
+						//}
 					}
 					else {
 						$this->result['error'] = "Vous n'avez pas les droits pour supprimer ce document";
@@ -101,51 +101,51 @@ class Document extends Entity {
 	}
 
 	public function upload() {
-		$titre = $_POST['titre'];
-		$description = $_POST['description'];
-		$path = $_POST['path'] . Token::getUserId();
-		$path = "../" . $path;
-		$this->result['path'] = $path;
-		$this->result['is_dir'] = is_dir($path);
-		if(!is_dir($path)){
-			$s = mkdir($path);
-			chmod($path, 0777);
-			$this->result['create'] = $s;
-		}
-		foreach ($_FILES as $file) {
-			$tmp = explode(".",$file["name"]);
-			$ext = array_pop($tmp);
-			$path .=  "/" . uniqid() . "." .strtolower($ext);
-			$this->result['name'] = $file["name"];
-			$success = move_uploaded_file($file["tmp_name"], $path); 
-			break;
-		}
-		if($success){
-			$qry = "INSERT INTO document SET id_owner='".Token::getUserId()."'";
-			
-			$where = array();
-			
-			if((Token::getUserRole() == "IF") && (!empty($_POST["id_establishment"]))) {
-				$rs = $this->get_id_establishment();
-				$where[] = "id_establishment ='".$rs[0]."'";
+		$success = false;
+		if (!empty($_POST["titre"]) && count($_FILES) > 0) {
+			$path = '../document/' . Token::getUserId();
+			$this->result['path'] = $path;
+			$this->result['is_dir'] = is_dir($path);
+			if(!is_dir($path)){
+				$s = mkdir($path);
+				chmod($path, 0777);
+				$this->result['create'] = $s;
 			}
-			
-			if(!empty($_POST["id_training"]))
-				$where[] = "id_training ='" .$_POST["id_training"]."'" ;
+			foreach ($_FILES as $file) {
+				$tmp = explode(".",$file["name"]);
+				$ext = array_pop($tmp);
+				$path .=  "/" . uniqid() . "." .strtolower($ext);
+				$this->result['name'] = $file["name"];
+				$success = move_uploaded_file($file["tmp_name"], $path); 
+				break;
+			}
+			if($success){
+				$qry = "INSERT INTO document SET id_owner='".Token::getUserId()."'";
 				
-			if(!empty($_POST["id_promo"]))
-				$where[] = "id_promo ='" .$_POST["id_promo"]."'";
+				$where = array();
 				
-			if(!empty($_POST["id_user"]))
-				$where[] = "id_user ='" .$_POST["id_user"]."'";
+				if((Token::getUserRole() == "IF") && (!empty($_POST["id_establishment"]))) {
+					$rs = $this->get_id_establishment();
+					$where[] = "id_establishment ='".$rs[0]."'";
+				}
 				
-			if(count($where) > 0)
-				$qry .= ", ".implode(", ", $where);
+				if(!empty($_POST["id_training"]))
+					$where[] = "id_training ='" .$_POST["id_training"]."'" ;
+					
+				if(!empty($_POST["id_promo"]))
+					$where[] = "id_promo ='" .$_POST["id_promo"]."'";
+					
+				if(!empty($_POST["id_user"]))
+					$where[] = "id_user ='" .$_POST["id_user"]."'";
+					
+				if(count($where) > 0)
+					$qry .= ", ".implode(", ", $where);
+					
+				$qry .= ", name='".$_POST["titre"]."', description='".$_POST["description"]."', path='".str_replace("../", "", $path)."'";
 				
-			$qry .= ", name='".$_POST["titre"]."', description='".$_POST["description"]."', path='".str_replace("../", "", $path)."'";
-			
-			if(!DB::exec($qry)) {
-				throw new \Exception('error occur during request');
+				if(!DB::exec($qry)) {
+					throw new \Exception('error occur during request');
+				}
 			}
 		}
 		$this->result['success'] = $success;
